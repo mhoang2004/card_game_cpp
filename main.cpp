@@ -80,7 +80,10 @@ class Computer {
 	public:
 		int score = 0;
 		int	aceCount = 0;
-		
+		int cardCount = 2;
+		bool special = false;
+		bool blackJack = false;
+
 		void setComputerCards(Card card) {
 			this->computerCards.push_back(card);
 		}
@@ -256,15 +259,10 @@ int reduceAce(int &userSum, int &userAceCount) {
     return userSum;
 }
  
-void computerPlay(PlayingCards &plCards, Computer &computer, int &numCards) {
-	while(reduceAce(computer.score, computer.aceCount) < 17) {
-		numCards++;
+void computerPlay(PlayingCards &plCards, Computer &computer) {
+	while(reduceAce(computer.score, computer.aceCount) < 17 && computer.cardCount < 5) {
+		computer.cardCount++;
 		computerPickOneCard(plCards, computer);	
-	}
-	if(numCards == 5 && computer.score <= 21) {
-		cout << "Magic Five! So lucky!!!\n\n";
-	} else {
-		//cout << "Computer " << i + 1 << " score is " << computersSum[i] << " ";
 	}
 } 
 
@@ -276,6 +274,8 @@ void playAgain() {
 }
 
 int main() {
+	ShowCur(0);
+	
 	srand(time(0)); //set a seed
 	
 	//init deck
@@ -303,7 +303,7 @@ int main() {
 	
 	//start playing game...
 	for(int i = 0; i < numberOfComputer; i++) {
-		int computerCardsNum = 2;
+		//int computerCardsNum = 2;
 
 		//computer init 2 cards value
 		gotoXY(x + i*40, y - 21); //set x,y if it special
@@ -315,29 +315,28 @@ int main() {
 		
 		//how the computer play
 		if(!computerSpecial) {
-			computerPlay(plCards, computers[i], computerCardsNum);
-			faceDownCard(x + i*40, y - 20, h, w, computerCardsNum);
+			computerPlay(plCards, computers[i]);
+			faceDownCard(x + i*40, y - 20, h, w, computers[i].cardCount);
 			textcolor(7);
 			gotoXY(102, yChat);
-			if(computerCardsNum - 2 == 0) {
+			if(computers[i].cardCount - 2 == 0) {
 				cout << " [do not hit]";
-			} else if(computerCardsNum - 2 == 1) {
+			} else if(computers[i].cardCount - 2 == 1) {
 				cout << " [hit 1 card]";
 			} else {
-				cout << " [hit " << computerCardsNum - 2 << " cards]";
+				cout << " [hit " << computers[i].cardCount - 2 << " cards]";
 			}
 		} else {
 			gotoXY(72, yChat);
 			textcolor(7);
 			cout << "Friday: Computer " << i+1 << " got a special case!!";
 			
-			//open 2 cards
+			//open 2 cards when special
 			vector<Card> computerCards = computers[i].getComputerCards();
-			for(int j = 0; j < computerCardsNum; j++) {
+			for(int j = 0; j < computers[i].cardCount; j++) {
 				drawCard(x + i*40 + j*5, y-20, h, w, computerCards[j].getRanks(), computerCards[j].getSuits());
 			}
 		}
-		
 		
 		yChat++;
 		
@@ -356,11 +355,13 @@ int main() {
 		if(kbhit()) {
 			char c = getch();
 			if(c == 13) { //Enter		
+				bool isMagicFive = false, isComputerMagicFive = false;
 				playerSum = reduceAce(playerSum, playerAceCount);
 				if(playerSum > 15 || playerCardsNum == 5) {
-					
 					//==open cards==
 					for(int i = 0; i < numberOfComputer; i++) {	
+						canHit = false;
+						
 						//choose computer
 						vector<Card> computerCards = computers[i].getComputerCards();
 						
@@ -370,24 +371,47 @@ int main() {
 						}
 					}
 					textcolor(7);
-					for(int i = 0; i < numberOfComputer; i++) {
-						computers[i].score = reduceAce(computers[i].score, computers[i].aceCount);
-					}
 					
-					canHit = false;
+					bool isMagicFive = false;
 					if(playerCardsNum == 5 && playerSum <= 21) {					
 						gotoXY(72, yChat++);
 						cout << "Friday: You got a Magic Five!";
-						
-						gotoXY(72, yChat++);
-						cout << "Friday: You win!! Congratulations!!";
-						
+						isMagicFive = true;
+												
 						break;
 					} else {
 						gotoXY(72, yChat++);
-						cout <<"Friday: Your score is " << playerSum;  
+						cout <<"Friday: Your score is: " << playerSum;  
 					}
-				
+					
+					for(int i = 0; i < numberOfComputer; i++) {
+						computers[i].score = reduceAce(computers[i].score, computers[i].aceCount);
+						
+						if(computers[i].cardCount == 5 && computers[i].score <= 21) {
+							gotoXY(72, yChat++);
+							cout << "Friday: Computer " << i << " got a Magic Five!";
+							
+							if(!isMagicFive) {
+								cout << "Friday: Computer " << i << " win!!";
+							}
+							
+							isComputerMagicFive = true;
+						}
+					}
+					
+					if(isMagicFive) {
+						if(isComputerMagicFive) {
+							gotoXY(72, yChat++);
+							cout << "Friday: Tie";
+						} else {
+							gotoXY(72, yChat++);
+							cout << "Friday: You win!! Congratulations!!";
+						}		 
+					} 
+					
+					if(isComputerMagicFive)
+						break;
+							
 					//take valid scores
 					vector<int> validScores;
 					for(int i = 0; i < numberOfComputer; i++) {
@@ -406,18 +430,13 @@ int main() {
 						}						 	
 						break;
 					}
-						
-					int maxScore = validScores[0];
-					for(int i = 1; i < validScores.size(); i++) {
-						if(maxScore < computers[i].score) 
-							maxScore = computers[i].score;
-					}
+				
+					int maxScore = *max_element(validScores.begin(), validScores.end());
 					
 					if(playerSum > maxScore && playerSum <= 21) {
 						gotoXY(72, yChat++);
 						cout << "Friday: You win!! Congratulations!!";
-					}						
-					else if(playerSum < maxScore || playerSum > 21) {
+					} else if(playerSum < maxScore || playerSum > 21) {
 						for(int i = 0; i < numberOfComputer; i++) {
 							if(computers[i].score == maxScore) {
 								gotoXY(72, yChat++);
