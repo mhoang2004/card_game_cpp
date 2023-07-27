@@ -2,32 +2,55 @@
 #include <conio.h> 
 #include <cstdlib>
 #include <ctime>
+#include "draw.h"
+
 using namespace std;
 
-int numberOfComputer = 6;
-vector<int> computersSum(numberOfComputer, 0); //array of computers score
-vector<int> computersAceCount(numberOfComputer, 0); //vector with size numberOfComputer and all elements initialized to 0
+int h = 12, w = 8;
 
+//chat area
+int xChat = 70, yChat = 19;
+void writeNotify(int &yChat, vector<string> variables = {}) {
+	textcolor(7);
+	for(int i = 0; i < variables.size(); i++) {	
+		gotoXY(72, yChat);
+		cout << variables[i];	
+	}
+	yChat++;
+	textcolor(39);
+}
+
+//====player==========
 int playerSum = 0;
+int playerCardsNum = 2; //init is 2
 int playerAceCount = 0;
+
+//====computers=======
+const int numberOfComputer = 3;
+
+//class Player {
+//	int playerSum = 0;
+//	int playerCardsNum = 2; //init is 2
+//	int playerAceCount = 0;			
+//};
 
 class Card {
 	private:
 	    string ranks = ""; // 2->A
-	    string suits = ""; // clubs, diamonds, hearts, spades
+	    int suits; // clubs, diamonds, hearts, spades
 	    int value;
 	public:
+		void setRanks(string ranks) {
+	        this->ranks = ranks;
+	    }
 	    string getRanks() {
 	        return ranks;
 	    }
-	    void setRanks(string ranks) {
-	        this->ranks = ranks;
-	    }
-	    string getSuits() {
-	        return suits;
-	    }
-	    void setSuits(string suits) {
+	    void setSuits(int suits) {
 	        this->suits = suits;
+	    }
+	    int getSuits() {
+	        return suits;
 	    }
 	    void setValue(string rank) {
 	    	if(rank == "A") {
@@ -42,11 +65,28 @@ class Card {
 	    	return value;
 		}
 };
+
+//create n computers
+class Computer {
+	private:	
+		vector<Card> computerCards;
+	public:
+		int score = 0;
+		int	aceCount = 0;
+		
+		void setComputerCards(Card card) {
+			this->computerCards.push_back(card);
+		}
+		vector<Card> getComputerCards() {
+			return computerCards;
+		}
+		
+};
 	
 class PlayingCards {
 	private:
 	    static const string ranks[13];
-	    static const string suits[4];
+	    static const int suits[4];
 	    vector<Card> playingCards;
 	public:
 	    // Constructor
@@ -61,8 +101,8 @@ class PlayingCards {
 	    }
 	    // Helper function to generate playingcards
 	    void createPlayingCards() {
-		    for (int j = 0; j < 13; j++) {
-		        for (int k = 0; k < 4; k++) {
+		    for(int j = 0; j < 13; j++) {
+		        for(int k = 0; k < 4; k++) {
 		            Card card;  // declare a new Card object inside the loop
 		            card.setRanks(ranks[j]);
 		            card.setSuits(suits[k]);
@@ -81,39 +121,60 @@ class PlayingCards {
 		}
 		Card get1Card() {
 		    Card lastCard = playingCards.back();
-		    cout << lastCard.getRanks() << " " << lastCard.getSuits() << endl;
 		    playingCards.pop_back();
 		    return lastCard;
 		}
 };
 
-class User {
-	private:
-		int score;
-		bool isSpecial; //when init 2 cards
-		bool isMagicFive;
-		bool isBust;
-		 
-};
+const string PlayingCards::ranks[13] = {"2", "3", "4", "5", "6", "7", "8", "9", "10", "J", "Q", "K", "A"};
+const int PlayingCards::suits[4] = {CLUBS, DIAMONDS, HEARTS, SPADES};
 
-const string PlayingCards::ranks[13] = { "2", "3", "4", "5", "6", "7", "8", "9", "10", "J", "Q", "K", "A" };
-const string PlayingCards::suits[4] = { "clubs", "diamonds", "hearts", "spades" };
-
-//(Function Prototype
+//Function Prototype
 int checkAce(Card card);
 int reduceAce(int &userSum, int &userAceCount);
-int hit(PlayingCards &plCards);
 bool checkSpecial(Card firstCard, Card secondCard);
-bool initTwoCards(PlayingCards &plCards, int &userSum, int &userAceCount);
-void pickOneCard(PlayingCards &plCards, int &userSum, int &userAceCount);
+bool initTwoCards(PlayingCards &plCards, int &playerSum, int &playerAceCount);
+void pickOneCard(PlayingCards &plCards, int &playerSum, int &playerAceCount, int &cardsNum, bool isDrawing = true);
 void printBust(int score);
+void computerPlay(PlayingCards &plCards, int &score, int &numCard, int &numAce);
 
-void pickOneCard(PlayingCards &plCards, int &userSum, int &userAceCount) {
+void pickOneCard(PlayingCards &plCards, int &playerSum, int &playerAceCount, int &cardsNum, bool isDrawing) {
 	Card lastCard = plCards.get1Card();
-	userSum += lastCard.getValue();
-	userAceCount += checkAce(lastCard);
+	playerSum += lastCard.getValue();
+	playerAceCount += checkAce(lastCard);
+	
+	if(isDrawing) {
+		string my_suits;
+		if(lastCard.getSuits() == 6) {
+			my_suits = "Spade";
+		} else if(lastCard.getSuits() == 5) {
+			my_suits = "Club";
+		} else if(lastCard.getSuits() == 4) {
+			my_suits = "Diamond";
+		} else {
+			my_suits = "Heart";
+		}
+		
+		//write notification
+	 	gotoXY(72, yChat++);
+		textcolor(7);
+		cout << "Friday: You got " << lastCard.getRanks() << " of " << my_suits << endl;
+		
+		drawCard(x + cardsNum*5, y, h, w, lastCard.getRanks(), lastCard.getSuits());
+		cardsNum++;
+		
+		textcolor(39);
+	}
 }
 
+void computerPickOneCard(PlayingCards &plCards, Computer &computer) {
+	Card lastCard = plCards.get1Card();
+	computer.score += lastCard.getValue();
+	computer.aceCount += checkAce(lastCard);
+	computer.setComputerCards(lastCard);
+}
+
+//player
 bool initTwoCards(PlayingCards &plCards, int &userSum, int &userAceCount) {
 	Card firstCard = plCards.get1Card();
 	userSum += firstCard.getValue();
@@ -123,23 +184,45 @@ bool initTwoCards(PlayingCards &plCards, int &userSum, int &userAceCount) {
 	userSum += secondCard.getValue();
 	userAceCount += checkAce(secondCard);
 	
+
+	drawCard(x, y, h, w, firstCard.getRanks(), firstCard.getSuits());
+	drawCard(x + 5, y, h, w, secondCard.getRanks(), secondCard.getSuits()); //5 is left paddding
+	gotoXY(x, y - 1); //set x,y if it special
+
+	return checkSpecial(firstCard, secondCard);
+}
+
+//computer
+bool initComputerTwoCards(PlayingCards &plCards, Computer &computer) {
+	Card firstCard = plCards.get1Card();
+	computer.score += firstCard.getValue();
+	computer.aceCount += checkAce(firstCard);
+		
+	Card secondCard = plCards.get1Card();
+	computer.score += secondCard.getValue();
+	computer.aceCount += checkAce(secondCard);
+	
+	computer.setComputerCards(firstCard);
+	computer.setComputerCards(secondCard);
+
 	return checkSpecial(firstCard, secondCard);
 }
 
 bool checkSpecial(Card firstCard, Card secondCard) {
+	textcolor(39);
 	if(firstCard.getRanks() == "A" && secondCard.getRanks() == "A") {
-		cout << "Double Aces!! Unbelievable!\n\n";
+		cout << "Double Aces!!";
 		return true;
 	} else if(firstCard.getRanks() == "A") {
 		if(secondCard.getRanks() == "K" || secondCard.getRanks() == "Q" || 
 		secondCard.getRanks() == "J" || secondCard.getRanks() == "10") {
-			cout << "Blackjack!!\n\n";
+			cout << "Blackjack!!";
 			return true;
 		}
 	} else if(secondCard.getRanks() == "A") {
 		if(firstCard.getRanks() == "K" || firstCard.getRanks() == "Q" || 
 		firstCard.getRanks() == "J" || firstCard.getRanks() == "10") {
-			cout << "Blackjack!!\n\n";
+			cout << "Blackjack!!";
 			return true;
 		}
 	}
@@ -151,37 +234,6 @@ void printBust(int score) {
 		cout << "(BUST) :((\n\n";
 	else
 		cout << "\n\n";  
-}
-
-void printRes(PlayingCards &plCards, int numberOfComputer) {
-	//======Computer============
-	for(int i = 0; i < numberOfComputer; i++) {
-		cout <<"Computer " << i + 1 << " playing...\n";  	
-
-		//init for player 2 cards
-		bool isSpecial = initTwoCards(plCards, computersSum[i], computersAceCount[i]);
-		
-		int currentCardsNum = 2;
-		if(!isSpecial) {
-			while(computersSum[i] < 17) {
-				currentCardsNum++;
-				pickOneCard(plCards, computersSum[i], computersAceCount[i]);
-			}
-			if(currentCardsNum == 5 && computersSum[i] <= 21) {
-				cout << "Magic Five! So lucky!!!\n\n";
-			} else {
-				cout << "Computer " << i + 1 << " score is " << computersSum[i] << " ";
-				printBust(computersSum[i]);
-			}
-		}
-	}
-	//=====Player======
-	cout <<"Player playing...\n";  	
-	//init for player 2 cards
-	bool isSpecial = initTwoCards(plCards, playerSum, playerAceCount);
-	
-	if(!isSpecial)
-		hit(plCards);
 }
 
 int checkAce(Card card) {
@@ -197,89 +249,221 @@ int reduceAce(int &userSum, int &userAceCount) {
     }
     return userSum;
 }
+ 
+void computerPlay(PlayingCards &plCards, Computer &computer, int &numCards) {
+	while(reduceAce(computer.score, computer.aceCount) < 17) {
+		numCards++;
+		computerPickOneCard(plCards, computer);	
+	}
+	if(numCards == 5 && computer.score <= 21) {
+		cout << "Magic Five! So lucky!!!\n\n";
+	} else {
+		//cout << "Computer " << i + 1 << " score is " << computersSum[i] << " ";
+	}
+} 
 
-int hit(PlayingCards &plCards) {
+void playAgain() {
+	yChat = 19;
+	playerSum = 0;
+	playerCardsNum = 2; //init is 2
+	playerAceCount = 0;
+}
+
+int main() {
+	srand(time(0)); //set a seed
+	
+	//init deck
+	PlayingCards plCards;
+	
+	//shuffle the deck
+	plCards.shufflePlayingCards();
+	
+	//init computers
+	class Computer computers[numberOfComputer];
+	
+	//player init 2 card
+	bool playerSpecial = initTwoCards(plCards, playerSum, playerAceCount);
+	
+	//computers init 2 card
+	for(int i = 0; i < numberOfComputer; i++) 
+		faceDownCard(x + i*40, y - 20, h, w, 2);	
+	
+	//before playing...
+	setBackground(xChat, 18, 80, 21, 7);
+	textcolor(7);
+	gotoXY(xChat+2, yChat++);
+	cout << "Friday: Press any key to start playing game..." << endl;
+	getch();
+	
+	//start playing game...
+	for(int i = 0; i < numberOfComputer; i++) {
+		int computerCardsNum = 2;
+
+		//computer init 2 cards value
+		gotoXY(x + i*40, y - 21); //set x,y if it special
+		bool computerSpecial = initComputerTwoCards(plCards, computers[i]);
+		
+		gotoXY(72, yChat);
+		textcolor(7);
+		cout << "Friday: Computer " << i+1 << " playing...";
+		
+		//how the computer play
+		if(!computerSpecial) {
+			computerPlay(plCards, computers[i], computerCardsNum);
+			faceDownCard(x + i*40, y - 20, h, w, computerCardsNum);
+			textcolor(7);
+			gotoXY(102, yChat);
+			if(computerCardsNum - 2 == 0) {
+				cout << " [do not hit]";
+			} else if(computerCardsNum - 2 == 1) {
+				cout << " [hit 1 card]";
+			} else {
+				cout << " [hit " << computerCardsNum - 2 << " cards]";
+			}
+		} else {
+			gotoXY(72, yChat);
+			textcolor(7);
+			cout << "Friday: Computer " << i+1 << " got a special case!!";
+			
+			//open 2 cards
+			vector<Card> computerCards = computers[i].getComputerCards();
+			for(int j = 0; j < computerCardsNum; j++) {
+				drawCard(x + i*40 + j*5, y-20, h, w, computerCards[j].getRanks(), computerCards[j].getSuits());
+			}
+		}
+		
+		
+		yChat++;
+		
+		Sleep(1500);
+	}
+	
+	gotoXY(72, yChat++);
+	textcolor(7);
+	cout << "Friday: Your turn, press 'Space' to Hit or 'Enter' to Stand..." << endl;
+	
+	textcolor(39);
+	
+	//control
 	bool canHit = true;
-	int currentCardsNum = 2;
-	while(true) {
+	while(1) {
 		if(kbhit()) {
 			char c = getch();
-			if(c == 13) { //Enter
-				if(canHit) {
-					Card lastCard = plCards.get1Card();
-					playerSum += lastCard.getValue();
-					playerAceCount += checkAce(lastCard);
-					
-					currentCardsNum++;
-					
-					if (reduceAce(playerSum, playerAceCount) > 21)  //check if Aces
-	        			canHit = false;
-				}
-			}
-			if(c == 32) { //Space
+			if(c == 13) { //Enter		
 				playerSum = reduceAce(playerSum, playerAceCount);
-				if(playerSum > 15 || currentCardsNum == 5) {
+				if(playerSum > 15 || playerCardsNum == 5) {
+					
+					//==open cards==
+					for(int i = 0; i < numberOfComputer; i++) {	
+						//choose computer
+						vector<Card> computerCards = computers[i].getComputerCards();
+						
+						//print cards
+						for(int j = 0; j < computerCards.size(); j++) {
+							drawCard(x + i*40 + j*5, y-20, h, w, computerCards[j].getRanks(), computerCards[j].getSuits());
+						}
+					}
+					textcolor(7);
 					for(int i = 0; i < numberOfComputer; i++) {
-						computersSum[i] = reduceAce(computersSum[i], computersAceCount[i]);
+						computers[i].score = reduceAce(computers[i].score, computers[i].aceCount);
 					}
 					
 					canHit = false;
-					if(currentCardsNum == 5 && playerSum <= 21) {
-						cout << "Magic Five! So lucky!!!\n\n";
-						cout << "You win!! Congratulations!!\n";
-						break; 
+					if(playerCardsNum == 5 && playerSum <= 21) {					
+						gotoXY(72, yChat++);
+						cout << "Friday: You got a Magic Five!";
+						
+						gotoXY(72, yChat++);
+						cout << "Friday: You win!! Congratulations!!";
+						
+						break;
 					} else {
-						cout <<"Player score is " << playerSum << " ";  
-						printBust(currentCardsNum);
+						gotoXY(72, yChat++);
+						cout <<"Friday: Your score is " << playerSum;  
 					}
 				
 					//take valid scores
 					vector<int> validScores;
 					for(int i = 0; i < numberOfComputer; i++) {
-						if(computersSum[i] <= 21)
-							validScores.push_back(computersSum[i]);
+						if(computers[i].score <= 21)
+							validScores.push_back(computers[i].score);
 					}
 					
 					if(validScores.size() == 0) {
-						if(playerSum <= 21) 
-							cout << "You win!! Congratulations!!\n";	
-						 else 
-							cout << "Tie!!\n";
+						if(playerSum <= 21) {
+							gotoXY(72, yChat++);
+							cout << "Friday: You win!! Congratulations!!";							
+						}
+						 else {
+						 	gotoXY(72, yChat++);
+							cout << "Friday: Tie!!";
+						}						 	
 						break;
 					}
 						
 					int maxScore = validScores[0];
 					for(int i = 1; i < validScores.size(); i++) {
-						if(maxScore < computersSum[i]) 
-							maxScore = computersSum[i];
+						if(maxScore < computers[i].score) 
+							maxScore = computers[i].score;
 					}
 					
-					if(playerSum > maxScore && playerSum <= 21) 
-						cout << "You win!! Congratulations!!\n";
+					if(playerSum > maxScore && playerSum <= 21) {
+						gotoXY(72, yChat++);
+						cout << "Friday: You win!! Congratulations!!";
+					}						
 					else if(playerSum < maxScore || playerSum > 21) {
 						for(int i = 0; i < numberOfComputer; i++) {
-							if(computersSum[i] == maxScore)
-								cout << "Computer " << i+1 << " win!!\n";
+							if(computers[i].score == maxScore) {
+								gotoXY(72, yChat++);
+								cout << "Friday: Computer " << i+1 << " win!!";
+							}
 						}
 					} else {
-						cout << "Tie!!\n";
+						gotoXY(72, yChat++);
+						cout << "Friday: Tie!!";
 					}
 					
 					break;
 				}
 			}
+			
+			if(c == 32) { //Space
+				if(canHit and !playerSpecial) {	
+					pickOneCard(plCards, playerSum, playerAceCount, playerCardsNum);				
+					if(reduceAce(playerSum, playerAceCount) > 21) { //check if Aces
+	        			canHit = false;
+					}
+				} else {
+					gotoXY(72, yChat++);
+					textcolor(7);
+					cout << "Friday: You can't hit anymore, hit 'Enter' to end the game..." << endl;
+				}
+			}
+			
+			if(c == 27) { //Esc
+				system("cls");
+				cout << "Thanks for playing game... \nSee you next time!!";
+				exit(0);
+			}
+		}	
+	}
+	
+	gotoXY(72, yChat++);
+	textcolor(7);
+	cout << "Friday: Press 'Enter' to play again, 'Esc' to exit..." << endl;
+	
+	textcolor(39);
+	
+	while(1) {
+		if(kbhit()) {
+		char c = getch();
+			if(c == 13) { //Enter
+				system("cls");
+				playAgain();
+				return main();
+			}
 		}
 	}
-}
-
-int main() {
-	srand(time(0)); //set a seed
-	PlayingCards plCards;
-	
-	plCards.shufflePlayingCards();
-	//plCards.createPlayingCards();
-	
-	printRes(plCards, numberOfComputer);
-
+	getch();
 	return 0;
 }
