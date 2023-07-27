@@ -8,6 +8,13 @@ using namespace std;
 
 int h = 12, w = 8;
 
+/*
+properties
+	width: 150
+	height: 40
+	bg_color: green
+*/
+
 //chat area
 int xChat = 70, yChat = 19;
 void writeNotify(int &yChat, vector<string> variables = {}) {
@@ -80,7 +87,6 @@ class Computer {
 		vector<Card> getComputerCards() {
 			return computerCards;
 		}
-		
 };
 	
 class PlayingCards {
