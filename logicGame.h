@@ -30,7 +30,11 @@ int checkAce(Card card) {
 
 int reduceAce(User &user) {
     while(user.score > 21 && user.aceCount > 0) {
-        user.score -= 10;
+    	if(user.score - 1 == 21) {
+    		user.score -= 1;
+		} else {
+			user.score -= 10;
+		}
         user.aceCount -= 1;
     }
     return user.score;

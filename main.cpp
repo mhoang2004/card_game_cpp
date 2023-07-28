@@ -59,6 +59,7 @@ void pickOneCard(PlayingCards &plCards, User &player) {
 	drawCard(x + player.cardCount*5, y, h, w, lastCard.getRanks(), lastCard.getSuits());
 	(player.cardCount)++;
 	
+	player.score = reduceAce(player);
 	checkMagicFive(player);
 	if(player.isMagicFive) {					
 		gotoXY(72, yChat++);
@@ -212,7 +213,6 @@ int main() {
 		if(kbhit()) {
 			char c = getch();
 			if(c == 13) { //Enter		
-				player.score = reduceAce(player);
 				if(player.score > 15 || player.cardCount == 5) {
 					canHit = false;
 					//==open cards==
