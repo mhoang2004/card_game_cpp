@@ -34,8 +34,8 @@ string convertSuits(int suit) {
 	return my_suits;
 }
 
-void checkMagicFive(User &user) {
-	if(user.cardCount == 5 && user.score <= 21) {
-		user.isMagicFive = true;		
-	}	
+void clearInputBuffer() {
+	while(kbhit()) {
+		char ch = getch();
+	}
 }

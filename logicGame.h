@@ -39,3 +39,24 @@ int reduceAce(User &user) {
     }
     return user.score;
 }
+
+void checkMagicFive(User &user) {
+	if(user.cardCount == 5 && user.score <= 21) {
+		user.isMagicFive = true;		
+	}	
+}
+
+bool initTwoCards(PlayingCards &plCards, User &user) {
+	Card firstCard = plCards.get1Card();
+	user.score += firstCard.getValue();
+	user.aceCount += checkAce(firstCard);
+		
+	Card secondCard = plCards.get1Card();
+	user.score += secondCard.getValue();
+	user.aceCount += checkAce(secondCard);
+	
+	user.setUserCards(firstCard);
+	user.setUserCards(secondCard);
+
+	return checkSpecial(user, firstCard, secondCard);
+}

@@ -1,4 +1,4 @@
-enum Suits{HEARTS = 3, DIAMONDS, CLUBS, SPADES};
+enum Suits {HEARTS = 3, DIAMONDS, CLUBS, SPADES};
 
 class Card {
 	private:
