@@ -273,7 +273,7 @@ int main() {
 					
 					if(computerDoubleAces) {
 						for(int i = 0; i < numberOfComputer; i++) {
-							if(computers[i].isMagicFive) {
+							if(computers[i].isDoubleAces) {
 								gotoXY(72, yChat++);
 								cout << "Friday: Computer " << i + 1 << " win!!";
 								money--;		
@@ -291,7 +291,7 @@ int main() {
 					
 					if(computerBlackJack) {
 						for(int i = 0; i < numberOfComputer; i++) {
-							if(computers[i].isMagicFive) {
+							if(computers[i].blackJack) {
 								gotoXY(72, yChat++);
 								cout << "Friday: Computer " << i + 1 << " win!!";	
 								money--;	
