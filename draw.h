@@ -2,8 +2,7 @@
 #include "mylib.h"
 using namespace std;
 int x = 15, y = 28;
-
-enum Suits{HEARTS = 3, DIAMONDS, CLUBS, SPADES};
+int h = 12, w = 8;
 
 void setBackground(int x, int y, int w, int h, int bg_color) {
 	textcolor(bg_color);	
@@ -63,9 +62,11 @@ void faceDownCard(int x, int y, int w, int h, int num) {
 	setBackground(x, y, w, h, 199);
 	
 	textcolor(199);
-	gotoXY(x+6, y+4);
-	cout << num;
-	
+	if(num != 0) {
+		gotoXY(x+6, y+4);
+		cout << num;
+	}
+
 	textcolor(39);
 	
 	onlyBox(x, y, w, h);

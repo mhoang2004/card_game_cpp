@@ -3,6 +3,9 @@
 using namespace std;
 enum Suits{HEARTS = 3, DIAMONDS, CLUBS, SPADES};
 int main() {
-	cout << "H" + "h";
+	for(int i = 0; i < 200; i++) {
+		textcolor(i);
+		cout << i << endl;
+	}
 	return 0;
 }
