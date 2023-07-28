@@ -27,7 +27,7 @@ int main() {
 	
 	//set a seed
 	srand(time(0)); 
-	
+
 	//init deck
 	PlayingCards plCards;
 	
@@ -203,7 +203,6 @@ int main() {
 					cout << "Friday: You can't hit anymore, press 'Enter' to end the game...";
 				}
 			}
-			
 			if(c == 27) { //Esc
 				system("cls");
 				cout << "Thanks for playing game... \nSee you next time!!";
@@ -234,6 +233,5 @@ int main() {
 		}
 	}
 	
-	getch();
 	return 0;
 } 
