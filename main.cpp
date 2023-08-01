@@ -1,4 +1,4 @@
-#include <bits/stdc++.h>
+ #include <bits/stdc++.h>
 #include <cstdlib>
 #include <fstream>
 
@@ -121,14 +121,15 @@ int main() {
 	
 	//====control=========
 	clearInputBuffer(); //clear all buffer
-
-	bool canHit = true;
+	
+	int checkedCards = 0;	
+	bool canHit = true; //if player score > 21
 	while(1) {
 		if(kbhit()) {
 			char c = getch();
 			if(c == 13) { //Enter		
 				if(player.score > 15 || player.cardCount == 5) {
-					canHit = false;
+					int oldMoney = money;
 					
 					textcolor(7);
 					
@@ -141,47 +142,54 @@ int main() {
 							cout << "Friday: Your score is " << player.score;
 						}
 					}
-					
+						
 					//open computer's cards
 					for(int i = 0; i < numberOfComputer; i++) {	
-						vector<Card> computerCards = computers[i].getUserCards();
-						
-						//print cards
-						for(int j = 0; j < computerCards.size(); j++) {
-							drawCard(x + i*40 + j*5, y-20, h, w, computerCards[j].getRanks(), computerCards[j].getSuits());
+						if(computers[i].getUserCards().size()) {
+							vector<Card> computerCards = computers[i].getUserCards();
+							
+							//print cards
+							for(int j = 0; j < computerCards.size(); j++) {
+								drawCard(x + i*40 + j*5, y-20, h, w, computerCards[j].getRanks(), computerCards[j].getSuits());
+							}
 						}
 					}
-					
-					int oldMoney = money;
-					
+
+					//caculate money
 					for(int i = 0; i < numberOfComputer; i++) {
 						//caculate computer's scores
-						computers[i].score = reduceAce(computers[i]);
-						
-						checkMagicFive(computers[i]);
-						if(computers[i].isMagicFive) {
+						if(computers[i].getUserCards().size()) {
+							computers[i].score = reduceAce(computers[i]);
+							
+							checkMagicFive(computers[i]);
+							if(computers[i].isMagicFive) {
+								gotoXY(72, yChat++);
+								textcolor(7);
+								cout << "Friday: Computer " << i + 1 << " got a Magic Five!";
+							}
+							
+							caculateMoney(money, player, computers[i]);
+						}
+					}
+					
+					if(checkedCards != 3) {
+						int profit = money - oldMoney;
+						if(profit < 0) {
 							gotoXY(72, yChat++);
-							textcolor(7);
-							cout << "Friday: Computer " << i + 1 << " got a Magic Five!";
+							cout << "Friday: You lost, money " << profit;
+						} else if(profit > 0) {
+							gotoXY(72, yChat++);
+							cout << "Friday: You win, money +" << profit;
+						} else {
+							gotoXY(72, yChat++);
+							cout << "Friday: Tie!!";						
 						}
 						
-						caculateMoney(money, player, computers[i]);
+						printMoney();
+						
+						//write file money
+						writeFile(money);
 					}
-					
-					int profit = money - oldMoney;
-					if(profit < 0) {
-						gotoXY(72, yChat++);
-						cout << "Friday: You lost, money " << profit;
-					} else if(profit > 0) {
-						gotoXY(72, yChat++);
-						cout << "Friday: You win, money +" << profit;
-					} else {
-						gotoXY(72, yChat++);
-						cout << "Friday: Tie!!";						
-					}
-					
-					//write file money
-					writeFile(money);
 					
 					break;						
 				} else {
@@ -191,7 +199,7 @@ int main() {
 				}
 			}
 			if(c == 32) { //Space
-				if(canHit && !player.isSpecial && player.cardCount < 5) {	
+				if(canHit && !player.isSpecial && player.cardCount < 5 && checkedCards != 3) {	
 					pickOneCard(plCards, player);
 									
 					if(reduceAce(player) > 21) { //check if Aces
@@ -208,30 +216,88 @@ int main() {
 				cout << "Thanks for playing game... \nSee you next time!!";
 				exit(0);
 			}
+			if(c == 49 || c == 50 || c == 51) { //1, 2, 3 key to solo with one computer	
+				if((player.score > 14 || player.cardCount == 5) && !player.isSpecial) {
+					int computerIndex = c - 49;
+	
+					//check if size != 0
+					if(computers[computerIndex].getUserCards().size()) {
+						checkedCards++;
+						//open computer's cards
+						for(int i = 0; i < numberOfComputer; i++) {	
+							if(i == computerIndex) {
+								vector<Card> computerCards = computers[i].getUserCards();
+								
+								//print cards
+								for(int j = 0; j < computerCards.size(); j++) {
+									drawCard(x + i*40 + j*5, y-20, h, w, computerCards[j].getRanks(), computerCards[j].getSuits());
+								}						
+								computers[i].clearUserCards();
+							}		
+						}
+						
+						int oldMoney = money;
+						textcolor(7);
+						
+						//caculate computer's scores
+						computers[computerIndex].score = reduceAce(computers[computerIndex]);
+						
+						checkMagicFive(computers[computerIndex]);
+						if(computers[computerIndex].isMagicFive) {
+							gotoXY(72, yChat++);
+							textcolor(7);
+							cout << "Friday: Computer " << computerIndex + 1 << " got a Magic Five!";
+						}
+						
+						caculateMoney(money, player, computers[computerIndex]);
+
+						//write notify
+						int profit = money - oldMoney;
+						gotoXY(72, yChat);
+						cout << "Friday: You check computer " << computerIndex + 1;
+						if(profit < 0) {
+							gotoXY(100, yChat);
+							cout << ": You lost, money " << profit;
+						} else if(profit > 0) {
+							gotoXY(100, yChat);
+							cout << ": You win, money +" << profit;
+						} else {
+							gotoXY(100, yChat);
+							cout << ": Tie!!";						
+						}
+						yChat++;
+						
+						printMoney();
+					}							
+				} else {
+					gotoXY(72, yChat++);
+					textcolor(7);
+					if(player.isSpecial) {
+						cout << "Friday: Press 'Enter' to end the game...";
+					} else {
+						cout << "Friday: Press 'Space' to Hit...";
+					}	
+				}
+			}
 		}	
 	}
 	
 	gotoXY(72, yChat++);
 	textcolor(7);
-	cout << "Friday: Press 'Enter' to play again, 'Esc' to exit...";
+	cout << "Friday: Press any key to play again, 'Esc' to exit...";
 	
 	textcolor(39);
 	
-	while(1) {
-		if(kbhit()) {
-		char c = getch();
-			if(c == 13) { //Enter
-				yChat = 19;
-				system("cls");
-				return main();
-			}
-			if(c == 27) { //Esc
-				system("cls");
-				cout << "Thanks for playing game... \nSee you next time!!";
-				exit(0);
-			}
-		}
+
+	char c = getch();
+	if(c == 27) { //Esc
+		system("cls");
+		cout << "Thanks for playing game... \nSee you next time!!";
+		exit(0);
 	}
 	
-	return 0;
+	yChat = 19;
+	system("cls");
+	
+	return main();
 } 

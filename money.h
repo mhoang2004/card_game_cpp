@@ -14,6 +14,18 @@ void caculateMoney(int &money, User player, User computer) {
 	/////////////begin special cases/////////////
 
 	//doubleAces -> blackJack -> magicFive
+	if(player.isDoubleAces && computer.isDoubleAces ||
+	player.blackJack && computer.blackJack) {
+		return;
+	}
+
+	if(player.isMagicFive && computer.isMagicFive) {
+		if(player.score < computer.score) {
+			money += 2;
+		} else if(player.score > computer.score) {
+			money -= 2;
+		}
+	}
 
 	if(player.isDoubleAces) {
 		money += 2;

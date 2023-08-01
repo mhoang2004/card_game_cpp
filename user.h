@@ -16,6 +16,10 @@ class User {
 		vector<Card> getUserCards() {
 			return userCards;
 		}
+		
+		void clearUserCards() {
+			userCards.clear();
+		}
 };
 
 string convertSuits(int suit) {
